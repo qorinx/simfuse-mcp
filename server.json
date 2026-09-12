@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "app.simfuse/esim-storefront",
+  "title": "SimFuse eSIM Storefront",
+  "description": "Travel eSIMs for 200+ countries. Browse plans, price a multi-country trip, and open a checkout.",
+  "version": "1.0.0",
+  "websiteUrl": "https://simfuse.app/agent/",
+  "icons": [
+    {
+      "src": "https://simfuse.app/apple-icon.png",
+      "mimeType": "image/png",
+      "sizes": ["1024x1024"]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.simfuse.app/agentic/mcp"
+    }
+  ]
+}
