@@ -96,7 +96,10 @@ In `.vscode/mcp.json`. Note the top-level key here is `servers`, not
 
 ### Cursor
 
-In `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project):
+This repository is also a Cursor plugin (`.cursor-plugin/plugin.json`), so
+once it is listed you can install it from the Cursor Marketplace. To add the
+server by hand, use `~/.cursor/mcp.json` (global) or `.cursor/mcp.json`
+(project):
 
 ```json
 {

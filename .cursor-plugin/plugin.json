@@ -1,0 +1,15 @@
+{
+  "name": "simfuse-esim",
+  "description": "Travel eSIMs for 200+ countries. Browse destinations and data plans, check coverage, price a multi-country trip on live prices, and get a checkout link. After purchase, check order status, eSIM install details and data usage.",
+  "version": "1.2.0",
+  "author": {
+    "name": "SimFuse",
+    "email": "support@simfuse.app"
+  },
+  "homepage": "https://simfuse.app/agent/",
+  "repository": "https://github.com/qorinx/simfuse-mcp",
+  "license": "MIT",
+  "keywords": ["esim", "travel", "mobile-data", "roaming", "connectivity", "shopping", "mcp", "x402"],
+  "logo": "assets/logo.svg",
+  "mcpServers": ".mcp.json"
+}
