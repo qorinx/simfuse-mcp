@@ -17,7 +17,7 @@ usage and list compatible top-ups. Payment happens on
 
 ## Quick start
 
-Add this to your MCP client configuration (also in [`mcp.json`](mcp.json)):
+Add this to your MCP client configuration (also in [`.mcp.json`](.mcp.json)):
 
 ```json
 {
