@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "simfuse": {
+      "type": "http",
+      "url": "https://simfuse.app/agentic/mcp"
+    }
+  }
+}

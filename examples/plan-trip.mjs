@@ -8,7 +8,7 @@
 // Read-only. It calls initialize, tools/list and plan-trip. It never calls
 // create-checkout-session, so nothing is ever bought by running this.
 
-const ENDPOINT = 'https://api.simfuse.app/agentic/mcp';
+const ENDPOINT = 'https://simfuse.app/agentic/mcp';
 
 let sessionId = null;
 let nextId = 1;

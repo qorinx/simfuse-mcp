@@ -1,16 +1,34 @@
 # SimFuse eSIM Storefront, MCP server
 
 Travel eSIMs for 200+ countries, as an MCP server. It lets an assistant browse
-destinations and data plans, read a plan's real terms (allowance, validity,
-fair-use policy, hotspot, the network it runs on), work out which countries a
-regional plan actually covers, price a whole multi-country trip against live
-retail prices, and open a checkout session at frozen prices. Payment, delivery
-and installation happen on [simfuse.app](https://simfuse.app/); the server
-itself never charges anything.
+destinations, regions and data plans, read a plan's real terms (allowance,
+validity, fair-use policy, hotspot, the network it runs on), check which
+countries a plan actually covers, build a plan to a traveller's spec, price a
+whole multi-country trip against live retail prices, and hand over a checkout
+link or open a checkout session at frozen prices. After purchase it can report
+an order's status, return the eSIM's QR code and install details, show data
+usage and list compatible top-ups. Payment happens on
+[simfuse.app](https://simfuse.app/); the server itself never charges anything.
 
-- **Endpoint:** `https://api.simfuse.app/agentic/mcp`
+- **Endpoint:** `https://simfuse.app/agentic/mcp`
 - **Transport:** Streamable HTTP
-- **Auth:** none. Every read tool is public.
+- **Auth:** none. Catalog tools are public; order tools are scoped by the
+  order id plus the email that bought it.
+
+## Quick start
+
+Add this to your MCP client configuration (also in [`mcp.json`](mcp.json)):
+
+```json
+{
+  "mcpServers": {
+    "simfuse": {
+      "type": "http",
+      "url": "https://simfuse.app/agentic/mcp"
+    }
+  }
+}
+```
 
 ## Connect
 
@@ -26,7 +44,7 @@ local proxy is involved.
 ### Claude Code
 
 ```bash
-claude mcp add --transport http simfuse https://api.simfuse.app/agentic/mcp
+claude mcp add --transport http simfuse https://simfuse.app/agentic/mcp
 ```
 
 Or in `.mcp.json`:
@@ -36,7 +54,7 @@ Or in `.mcp.json`:
   "mcpServers": {
     "simfuse": {
       "type": "http",
-      "url": "https://api.simfuse.app/agentic/mcp"
+      "url": "https://simfuse.app/agentic/mcp"
     }
   }
 }
@@ -63,7 +81,7 @@ In `.vscode/mcp.json`. Note the top-level key here is `servers`, not
   "servers": {
     "simfuse": {
       "type": "http",
-      "url": "https://api.simfuse.app/agentic/mcp"
+      "url": "https://simfuse.app/agentic/mcp"
     }
   }
 }
@@ -77,7 +95,7 @@ In `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project):
 {
   "mcpServers": {
     "simfuse": {
-      "url": "https://api.simfuse.app/agentic/mcp"
+      "url": "https://simfuse.app/agentic/mcp"
     }
   }
 }
@@ -92,7 +110,7 @@ Bridge with [`mcp-remote`](https://github.com/geelen/mcp-remote):
   "mcpServers": {
     "simfuse": {
       "command": "npx",
-      "args": ["mcp-remote", "https://api.simfuse.app/agentic/mcp", "--transport", "http-only"]
+      "args": ["mcp-remote", "https://simfuse.app/agentic/mcp", "--transport", "http-only"]
     }
   }
 }
@@ -101,12 +119,12 @@ Bridge with [`mcp-remote`](https://github.com/geelen/mcp-remote):
 ### curl
 
 ```bash
-curl -s https://api.simfuse.app/agentic/mcp \
+curl -s https://simfuse.app/agentic/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}'
 
-curl -s https://api.simfuse.app/agentic/mcp \
+curl -s https://simfuse.app/agentic/mcp \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}'
@@ -114,14 +132,35 @@ curl -s https://api.simfuse.app/agentic/mcp \
 
 ## Tools
 
+### Catalog and trip planning
+
 | Tool | What it does | Key parameters | Read-only |
 |---|---|---|---|
 | `list-destinations` | Every country on sale, with the cheapest plan price for each. Turns a place name into the two-letter code the other tools take. | `search`, `currency`, `limit` | yes |
-| `list-plans` | The plans on sale for one destination, or a catalog-wide search narrowed by allowance, validity and price. | `destination`, `min_data_amount_mb`, `max_data_amount_mb`, `min_validity_days`, `max_validity_days`, `min_price_cents`, `max_price_cents`, `currency`, `limit` | yes |
+| `list-regions` | Regional and worldwide scopes with their slugs, member countries and starting prices. | `search`, `currency`, `limit` | yes |
+| `get-destination-info` | One destination in summary: codes, region, plan count, price range, smallest and largest bundle, storefront page. | `destination` (required), `currency` | yes |
+| `list-plans` | The plans on sale for one country or region, or a catalog-wide search narrowed by allowance, validity and price. | `destination` or `region`, `min_data_amount_mb`, `max_data_amount_mb`, `min_validity_days`, `max_validity_days`, `min_price_cents`, `max_price_cents`, `currency`, `limit` | yes |
 | `get-plan` | One plan in full: allowance, validity, fair-use policy, hotspot and top-up support, network, price. | `plan_id` (required), `currency` | yes |
+| `build-plan` | Finds the one real plan matching a requested data amount, validity, network and voice option, and explains any adjustment to the nearest plan on sale. | `country_code`, `data_mb`, `validity_days` (required), `network`, `voice`, `currency` | yes |
 | `get-plan-coverage` | Every country a plan works in, plus any country of its own region it leaves out. | `plan_id` (required) | yes |
+| `check-coverage` | A yes or no on whether one plan works in one destination. | `plan_id`, `destination` (required) | yes |
 | `plan-trip` | Prices a whole trip. Compares one plan for the route against one plan per country against a mix, and returns the cheapest complete option with a reason. | `stops` (required), `usage`, `start`, `currency` | yes |
-| `create-checkout-session` | Opens a checkout session at frozen prices and returns a bearer agent key. Charges nothing and reserves nothing. | `items` (required), `currency`, `buyer_email`, `agent_name` | no |
+
+### Buying
+
+| Tool | What it does | Key parameters | Read-only |
+|---|---|---|---|
+| `get-checkout-link` | The page where a person buys one plan (Apple Pay, Google Pay, card). Charges nothing; the buyer needs no account. | `plan_id` (required), `currency`, `source` | yes |
+| `create-checkout-session` | Opens a checkout session for one or more plans at frozen prices and returns a bearer agent key, for an agent settling the purchase itself. Charges nothing and reserves nothing. | `items` (required), `currency`, `buyer_email`, `agent_name` | no |
+
+### After purchase
+
+| Tool | What it does | Key parameters | Read-only |
+|---|---|---|---|
+| `get-order-status` | Whether an order completed and whether its eSIMs are provisioned yet. | `order_id`, `email` (required) | yes |
+| `get-esim-activation` | QR code, LPA string, SM-DP+ address and activation code, one-tap install links and a hosted install page. | `order_id`, `email` (required) | yes |
+| `check-esim-usage` | Data used and remaining on one eSIM. | `order_id`, `email`, `iccid` (required) | yes |
+| `list-topup-options` | Top-ups the eSIM's network will accept, with the link that opens it in the SimFuse app. Top-ups are bought in the app, not here. | `order_id`, `email`, `iccid` (required), `currency` | yes |
 
 Good to know:
 
@@ -153,26 +192,27 @@ node examples/plan-trip.mjs JP:7 KR:5
 Real output, seven days in Japan then five in South Korea:
 
 ```
-Server: SimFuse Storefront 1.0.0 (MCP 2025-06-18)
-Tools:  plan-trip, list-destinations, list-plans, get-plan, get-plan-coverage, create-checkout-session
+Server: SimFuse Storefront 1.2.0 (MCP 2025-06-18)
+Tools:  plan-trip, list-destinations, list-regions, get-destination-info, list-plans, get-plan, build-plan, get-plan-coverage, check-coverage, get-checkout-link, create-checkout-session, get-order-status, get-esim-activation, check-esim-usage, list-topup-options
 
 Planning: JP 7d -> KR 5d
-  JP  2026-09-11 to 2026-09-18  needs about 5.5 GB
-  KR  2026-09-18 to 2026-09-23  needs about 3.9 GB
+  JP  2026-11-07 to 2026-11-14  needs about 5.5 GB
+  KR  2026-11-14 to 2026-11-19  needs about 3.9 GB
 
 Options compared:
-* single      1 eSIM(s)  €13.99
-  per_country 2 eSIM(s)  €20.68
+* single      1 eSIM(s)  €10.69
+  per_country 2 eSIM(s)  €22.48
 
 Recommended: single
-Why: One eSIM, SEA 10GB, covers all 2 stops for €13.99. It saves €6.69 over the next cheapest way to cover the route.
+Why: One eSIM, Asia 10 GB - 30 days, covers all 2 stops for €10.69. It saves €11.79 over the next cheapest way to cover the route.
 
 What to buy:
-  - SEA 10GB
-    10 GB, 30 days, €13.99  covers JP, KR
-    plan id 01kvmtdhv2ygyshqzxah9zcwqh
+  - Asia 10 GB - 30 days
+    10 GB, 30 days, €10.69  covers JP, KR
+    plan id 01m0ja69csf77d26hm18vacjb4
 
-Same trip on the site: https://simfuse.app/planner/?trip=2026-09-11.jp7r_kr5r
+Same trip on the site: https://simfuse.app/planner/?trip=2026-11-07.jp7r_kr5r
+Pass plan.checkout.items to create-checkout-session when the traveller is ready.
 ```
 
 The underlying response also carries a `checkout.items` array shaped for

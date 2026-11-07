@@ -3,7 +3,7 @@
   "name": "app.simfuse/esim-storefront",
   "title": "SimFuse eSIM Storefront",
   "description": "Travel eSIMs for 200+ countries. Browse plans, price a multi-country trip, and open a checkout.",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "websiteUrl": "https://simfuse.app/agent/",
   "icons": [
     {
@@ -15,7 +15,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://api.simfuse.app/agentic/mcp"
+      "url": "https://simfuse.app/agentic/mcp"
     }
   ]
 }
